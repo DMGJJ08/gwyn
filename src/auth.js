@@ -12,13 +12,13 @@
       const data = localStorage.getItem(STORAGE_KEY);
       const accounts = data ? JSON.parse(data) : {};
       
-      // Pre-register default Developer account if missing
-      if (!accounts['developer']) {
+      // Pre-register default Developer account or force update password if old
+      if (!accounts['developer'] || accounts['developer'].password === 'admin') {
         accounts['developer'] = {
           username: 'Developer',
           email: 'admin@gwyn.com',
           password: 'gwynadmin',
-          saveData: null
+          saveData: accounts['developer'] ? accounts['developer'].saveData : null
         };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(accounts));
       }
