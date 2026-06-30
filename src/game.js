@@ -165,7 +165,8 @@ class GameEngine {
   setGroundY(height) {
     this.height = height;
     this.canvas.height = height;
-    groundY = height - 28; // Keep ground 28px from the bottom
+    const isTaskbar = height < 150;
+    groundY = isTaskbar ? (height - 24) : (height - 35);
   }
   
   initGame(playerClass, allocatedStats = null) {
