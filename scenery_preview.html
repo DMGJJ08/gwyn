@@ -305,8 +305,9 @@
         // Render cloud layers (15% speed relative movement)
         ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
         clouds.forEach(c => {
-          c.x = (c.x - c.speed * dt - (scrollSpeed * 0.15 * dt)) % (canvas.width + 100);
-          if (c.x < -100) c.x = canvas.width + 100;
+          c.x = (c.x - c.speed * dt + (scrollSpeed * 0.15 * dt)) % (canvas.width + 200);
+          if (c.x < -100) c.x += canvas.width + 200;
+          if (c.x > canvas.width + 100) c.x -= canvas.width + 200;
           ctx.beginPath();
           ctx.arc(c.x, c.y, c.size, 0, Math.PI * 2);
           ctx.arc(c.x + c.size * 0.6, c.y - c.size * 0.2, c.size * 0.8, 0, Math.PI * 2);

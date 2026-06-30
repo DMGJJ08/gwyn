@@ -554,8 +554,10 @@ class GameEngine {
         { seed: 700, y: 60, size: 20, speed: 12 }
       ];
       cloudSeeds.forEach(c => {
-        const cloudX = (c.seed - (time * c.speed * 40) - (scrollX * 0.15)) % (this.width + 100);
-        const drawX = cloudX < -100 ? cloudX + this.width + 200 : cloudX;
+        let cloudX = (c.seed - (time * c.speed * 40) + (scrollX * 0.15)) % (this.width + 200);
+        if (cloudX < -100) cloudX += this.width + 200;
+        if (cloudX > this.width + 100) cloudX -= this.width + 200;
+        const drawX = cloudX;
         this.ctx.beginPath();
         this.ctx.arc(drawX, c.y, c.size, 0, Math.PI * 2);
         this.ctx.arc(drawX + c.size * 0.6, c.y - c.size * 0.2, c.size * 0.8, 0, Math.PI * 2);
