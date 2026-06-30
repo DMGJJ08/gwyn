@@ -383,9 +383,15 @@ class GameEngine {
         // Update stats UI
         if (window.updateUI) window.updateUI();
         
-        // Check Level Clear condition
-        if (this.enemiesKilledInLevel >= this.enemiesRequiredToClear) {
-          this.handleLevelClear();
+        // Check Level Clear condition (Boss level requires the Boss to die, normal levels require kill count)
+        if (this.activeLevel === 5) {
+          if (enemy.isBoss) {
+            this.handleLevelClear();
+          }
+        } else {
+          if (this.enemiesKilledInLevel >= this.enemiesRequiredToClear) {
+            this.handleLevelClear();
+          }
         }
       }
     }

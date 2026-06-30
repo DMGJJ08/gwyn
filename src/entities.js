@@ -1025,7 +1025,7 @@ class Boss extends Enemy {
       }
     } else if (this.stage === 3) { // Pharaoh summons sandstorms or minions
       this.pharaohMinionTimer += dt;
-      if (this.pharaohMinionTimer >= 8.0) {
+      if (this.pharaohMinionTimer >= 5.0) {
         // Summon 2 small mummies
         spawnMinionCallback();
         particles.push(new Particle(this.x, this.y, -50, -60, 'hsl(45, 90%, 55%)', 'SUMMON MINIONS', 14, 0.8));
