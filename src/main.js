@@ -528,7 +528,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateAssignedSlotVisuals() {
     // HP slot
     if (window.assignedHpItem) {
-      slotHp.innerHTML = '<span style="font-size:20px;">🧪</span><span style="font-size:8px; font-weight:bold; color:var(--health); position:absolute; bottom:2px;">HP Pot</span>';
+      slotHp.innerHTML = '<span style="font-size:20px; filter: hue-rotate(240deg) saturate(1.5);">🧪</span><span style="font-size:8px; font-weight:bold; color:var(--health); position:absolute; bottom:2px;">HP Pot</span>';
       slotHp.classList.add('assigned');
     } else {
       slotHp.innerHTML = '<span class="slot-placeholder" style="font-size: 10px; color: var(--text-muted); text-align: center; line-height: 1;">Drop HP</span>';
@@ -537,7 +537,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // MP slot
     if (window.assignedMpItem) {
-      slotMp.innerHTML = '<span style="font-size:20px;">🧪</span><span style="font-size:8px; font-weight:bold; color:hsl(210, 80%, 65%); position:absolute; bottom:2px;">MP Pot</span>';
+      slotMp.innerHTML = '<span style="font-size:20px; filter: hue-rotate(120deg) saturate(1.5);">🧪</span><span style="font-size:8px; font-weight:bold; color:hsl(210, 80%, 65%); position:absolute; bottom:2px;">MP Pot</span>';
       slotMp.classList.add('assigned');
     } else {
       slotMp.innerHTML = '<span class="slot-placeholder" style="font-size: 10px; color: var(--text-muted); text-align: center; line-height: 1;">Drop MP</span>';
