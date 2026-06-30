@@ -318,9 +318,14 @@ document.addEventListener('DOMContentLoaded', () => {
     requestAnimationFrame((t) => game.gameLoop(t));
   });
 
-  // Respawn Binding
+  // Respawn Binding - Punishes death by sending the player back to Level 1 of the previous cleared stage
   btnRespawn.addEventListener('click', () => {
     gameoverOverlay.classList.remove('show');
+    
+    // Set active stage to previous stage (min Stage 1) and reset active level to 1
+    game.activeStage = Math.max(1, game.activeStage - 1);
+    game.activeLevel = 1;
+    
     game.player.resetHp();
     game.isPlaying = true;
     game.startLevel();
@@ -803,6 +808,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // Bind globals for cross-file notifications
   window.updateUI = updateUI;
   window.showGameOver = () => {
+    const respawnStage = Math.max(1, game.activeStage - 1);
+    const stageNames = {
+      1: "Stage 1: The Farm",
+      2: "Stage 2: Underwater",
+      3: "Stage 3: The Desert"
+    };
+    const targetName = stageNames[respawnStage] || `Stage ${respawnStage}`;
+    btnRespawn.textContent = `Respawn at ${targetName}`;
     gameoverOverlay.classList.add('show');
   };
   window.showVictory = () => {
