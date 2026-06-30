@@ -520,81 +520,199 @@ class GameEngine {
 
   drawBackground() {
     const isTaskbar = this.height < 150;
+    const scrollX = this.bgOffset;
     
+    // --- LAYER 1: SKY & FAR BACKGROUND (15% Speed) ---
     if (this.bgLoaded[this.activeStage]) {
-      // Draw scrolling generated backgrounds
       const img = this.bgImages[this.activeStage];
       const yPos = isTaskbar ? -50 : 0; // Adjust clipping for taskbar mode
+      const imgScrollX = (scrollX * 0.15) % this.width;
       
-      const scrollX = -this.bgOffset;
-      const startTileIndex = Math.floor(scrollX / this.width);
+      const startTileIndex = Math.floor(imgScrollX / this.width);
       
-      // Draw first tile
-      const x1 = startTileIndex * this.width - scrollX;
+      const x1 = startTileIndex * this.width - imgScrollX;
       const isFlipped1 = (startTileIndex % 2 !== 0);
       this.drawBgTile(img, x1, yPos, this.width, this.height, isFlipped1);
       
-      // Draw second tile
-      const x2 = (startTileIndex + 1) * this.width - scrollX;
+      const x2 = (startTileIndex + 1) * this.width - imgScrollX;
       const isFlipped2 = ((startTileIndex + 1) % 2 !== 0);
       this.drawBgTile(img, x2, yPos, this.width, this.height, isFlipped2);
     } else {
-      // Fallback dynamic HSL gradients if background images haven't loaded yet
+      // Fallback gradients if assets haven't loaded yet
       const grad = this.ctx.createLinearGradient(0, 0, 0, this.height);
-      
       if (this.activeStage === 1) { // Sunset Farm gradient
-        grad.addColorStop(0, 'hsl(260, 40%, 15%)');
-        grad.addColorStop(0.5, 'hsl(20, 50%, 20%)');
-        grad.addColorStop(1, 'hsl(120, 30%, 10%)'); // Ground dark green
+        grad.addColorStop(0, '#1a0933');
+        grad.addColorStop(0.5, '#4a123c');
+        grad.addColorStop(1, '#c25a1f');
       } else if (this.activeStage === 2) { // Deep Sea gradient
-        grad.addColorStop(0, 'hsl(205, 70%, 15%)');
-        grad.addColorStop(1, 'hsl(220, 80%, 6%)');
-      } else if (this.activeStage === 3) { // Desert Sunset gradient
-        grad.addColorStop(0, 'hsl(340, 50%, 15%)');
-        grad.addColorStop(0.5, 'hsl(28, 55%, 22%)');
-        grad.addColorStop(1, 'hsl(40, 35%, 15%)');
+        grad.addColorStop(0, '#020b17');
+        grad.addColorStop(0.5, '#071d3a');
+        grad.addColorStop(1, '#0c2e59');
+      } else if (this.activeStage === 3) { // Desert sunset gradient
+        grad.addColorStop(0, '#2c042d');
+        grad.addColorStop(0.5, '#4d0b28');
+        grad.addColorStop(1, '#d47311');
       }
-      
       this.ctx.fillStyle = grad;
       this.ctx.fillRect(0, 0, this.width, this.height);
       
-      // Draw simple structural silhouettes for environment feel
-      this.ctx.fillStyle = 'rgba(0,0,0,0.15)';
-      
-      // Map local offset to single width for fallback compatibility
-      const localOffset = this.bgOffset % this.width;
-      
+      // Draw setting sun for farm/desert
       if (this.activeStage === 1) {
-        // Draw rolling hills
+        this.ctx.fillStyle = '#ff7f36';
         this.ctx.beginPath();
-        this.ctx.arc(200 + localOffset, groundY + 40, 200, 0, Math.PI * 2);
-        this.ctx.arc(600 + localOffset, groundY + 80, 300, 0, Math.PI * 2);
-        this.ctx.arc(200 + localOffset + this.width, groundY + 40, 200, 0, Math.PI * 2);
-        this.ctx.arc(600 + localOffset + this.width, groundY + 80, 300, 0, Math.PI * 2);
+        this.ctx.arc(this.width / 2, groundY - 10, 45, 0, Math.PI * 2);
         this.ctx.fill();
-      } else if (this.activeStage === 2) {
-        // Coral branches
-        this.ctx.fillRect(150 + localOffset, groundY - 30, 8, 30);
-        this.ctx.fillRect(550 + localOffset, groundY - 50, 10, 50);
-        this.ctx.fillRect(150 + localOffset + this.width, groundY - 30, 8, 30);
-        this.ctx.fillRect(550 + localOffset + this.width, groundY - 50, 10, 50);
       } else if (this.activeStage === 3) {
-        // Pyramids silhouttes
+        this.ctx.fillStyle = '#f1c40f';
         this.ctx.beginPath();
-        this.ctx.moveTo(100 + localOffset, groundY);
-        this.ctx.lineTo(200 + localOffset, groundY - 80);
-        this.ctx.lineTo(300 + localOffset, groundY);
-        this.ctx.moveTo(400 + localOffset, groundY);
-        this.ctx.lineTo(550 + localOffset, groundY - 110);
-        this.ctx.lineTo(700 + localOffset, groundY);
-        
-        this.ctx.moveTo(100 + localOffset + this.width, groundY);
-        this.ctx.lineTo(200 + localOffset + this.width, groundY - 80);
-        this.ctx.lineTo(300 + localOffset + this.width, groundY);
-        this.ctx.moveTo(400 + localOffset + this.width, groundY);
-        this.ctx.lineTo(550 + localOffset + this.width, groundY - 110);
-        this.ctx.lineTo(700 + localOffset + this.width, groundY);
+        this.ctx.arc(this.width * 0.7, groundY - 5, 60, 0, Math.PI * 2);
         this.ctx.fill();
+      }
+    }
+    
+    // Additional ocean atmosphere details
+    if (this.activeStage === 2) {
+      // Rotating ambient light rays
+      this.ctx.fillStyle = 'rgba(12, 146, 204, 0.02)';
+      const time = performance.now() * 0.0005;
+      for (let i = 0; i < 4; i++) {
+        const angle = (i * Math.PI / 4) + Math.sin(time) * 0.05;
+        this.ctx.beginPath();
+        this.ctx.moveTo(this.width / 2, -20);
+        this.ctx.lineTo(this.width / 2 + Math.cos(angle - 0.2) * 500, this.height + 50);
+        this.ctx.lineTo(this.width / 2 + Math.cos(angle + 0.2) * 500, this.height + 50);
+        this.ctx.closePath();
+        this.ctx.fill();
+      }
+      
+      // Floating bubbles rising procedurally
+      this.ctx.fillStyle = 'rgba(255,255,255,0.12)';
+      this.ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+      this.ctx.lineWidth = 0.8;
+      for (let i = 0; i < 12; i++) {
+        const seed = i * 73.13;
+        const bubbleX = (seed + scrollX * 0.15 + Math.sin(time * 3 + seed) * 10) % this.width;
+        const bubbleY = (this.height - (time * 50 + seed) % (this.height + 20));
+        const radius = (seed % 2.5) + 0.8;
+        this.ctx.beginPath();
+        this.ctx.arc(bubbleX, bubbleY, radius, 0, Math.PI * 2);
+        this.ctx.fill();
+        this.ctx.stroke();
+      }
+    }
+    
+    // --- LAYER 2: MIDGROUND SILHOUETTES (45% Speed) ---
+    const midOffset = (scrollX * 0.45) % this.width;
+    
+    if (this.activeStage === 1) { // Farm Hills
+      this.ctx.fillStyle = '#1c2417';
+      this.ctx.beginPath();
+      this.ctx.moveTo(0, this.height);
+      for (let t = 0; t <= 2; t++) {
+        const tileStart = t * this.width - midOffset;
+        for (let x = 0; x <= this.width; x += 15) {
+          const worldX = tileStart + x;
+          const y = Math.sin(worldX * 0.004) * 22 + Math.cos(worldX * 0.008) * 8 + groundY - 45;
+          this.ctx.lineTo(worldX, y);
+        }
+      }
+      this.ctx.lineTo(this.width * 2, this.height);
+      this.ctx.closePath();
+      this.ctx.fill();
+    } else if (this.activeStage === 2) { // Deep Sea Coral Reefs
+      this.ctx.fillStyle = '#041021';
+      this.ctx.beginPath();
+      this.ctx.moveTo(0, this.height);
+      for (let t = 0; t <= 2; t++) {
+        const tileStart = t * this.width - midOffset;
+        for (let x = 0; x <= this.width; x += 15) {
+          const worldX = tileStart + x;
+          const y = Math.cos(worldX * 0.005) * 15 + Math.sin(worldX * 0.015) * 8 + groundY - 40;
+          this.ctx.lineTo(worldX, y);
+        }
+      }
+      this.ctx.lineTo(this.width * 2, this.height);
+      this.ctx.closePath();
+      this.ctx.fill();
+    } else if (this.activeStage === 3) { // Desert Sand Dunes
+      this.ctx.fillStyle = '#3a0c0a';
+      this.ctx.beginPath();
+      this.ctx.moveTo(0, this.height);
+      for (let t = 0; t <= 2; t++) {
+        const tileStart = t * this.width - midOffset;
+        for (let x = 0; x <= this.width; x += 20) {
+          const worldX = tileStart + x;
+          const y = Math.sin(worldX * 0.003) * 35 + groundY - 35;
+          this.ctx.lineTo(worldX, y);
+        }
+      }
+      this.ctx.lineTo(this.width * 2, this.height);
+      this.ctx.closePath();
+      this.ctx.fill();
+    }
+    
+    // --- LAYER 3: FOREGROUND PLATFORM & DETAILS (100% Speed) ---
+    if (this.activeStage === 1) { // Farm grass/soil
+      this.ctx.fillStyle = '#0f140d';
+      this.ctx.fillRect(0, groundY, this.width, this.height - groundY);
+      this.ctx.fillStyle = '#223018';
+      this.ctx.fillRect(0, groundY, this.width, 4);
+      
+      // Farm fences
+      this.ctx.fillStyle = '#131210';
+      this.ctx.strokeStyle = '#1d1b17';
+      this.ctx.lineWidth = 3;
+      const postSpacing = 160;
+      const foreOffset = scrollX % postSpacing;
+      for (let x = -postSpacing; x < this.width + postSpacing; x += postSpacing) {
+        const postX = x - foreOffset + 50;
+        this.ctx.fillRect(postX, groundY - 24, 6, 24);
+        
+        this.ctx.beginPath();
+        this.ctx.moveTo(postX - 5, groundY - 16);
+        this.ctx.lineTo(postX + postSpacing + 5, groundY - 16);
+        this.ctx.moveTo(postX - 5, groundY - 8);
+        this.ctx.lineTo(postX + postSpacing + 5, groundY - 8);
+        this.ctx.stroke();
+      }
+    } else if (this.activeStage === 2) { // Deep Sea sand/seaweed
+      this.ctx.fillStyle = '#02070f';
+      this.ctx.fillRect(0, groundY, this.width, this.height - groundY);
+      this.ctx.fillStyle = '#06162a';
+      this.ctx.fillRect(0, groundY, this.width, 3);
+      
+      // Seaweed swaying
+      this.ctx.strokeStyle = '#08253e';
+      this.ctx.lineWidth = 6;
+      this.ctx.lineCap = 'round';
+      const seaweedSpacing = 90;
+      const foreOffset = scrollX % seaweedSpacing;
+      const time = performance.now() * 0.003;
+      for (let x = -seaweedSpacing; x < this.width + seaweedSpacing; x += seaweedSpacing) {
+        const plantX = x - foreOffset + 30;
+        const sway = Math.sin(time + plantX) * 12;
+        this.ctx.beginPath();
+        this.ctx.moveTo(plantX, groundY);
+        this.ctx.quadraticCurveTo(plantX - 5 + sway * 0.5, groundY - 20, plantX + sway, groundY - 40);
+        this.ctx.stroke();
+      }
+    } else if (this.activeStage === 3) { // Desert sand path/cacti
+      this.ctx.fillStyle = '#1c0402';
+      this.ctx.fillRect(0, groundY, this.width, this.height - groundY);
+      this.ctx.fillStyle = '#380a04';
+      this.ctx.fillRect(0, groundY, this.width, 3);
+      
+      // Desert cacti
+      this.ctx.fillStyle = '#100201';
+      const cactusSpacing = 220;
+      const foreOffset = scrollX % cactusSpacing;
+      for (let x = -cactusSpacing; x < this.width + cactusSpacing; x += cactusSpacing) {
+        const postX = x - foreOffset + 70;
+        this.ctx.fillRect(postX, groundY - 36, 6, 36);
+        this.ctx.fillRect(postX - 8, groundY - 26, 8, 5);
+        this.ctx.fillRect(postX - 8, groundY - 32, 5, 8);
+        this.ctx.fillRect(postX + 6, groundY - 20, 8, 5);
+        this.ctx.fillRect(postX + 9, groundY - 28, 5, 10);
       }
     }
   }
