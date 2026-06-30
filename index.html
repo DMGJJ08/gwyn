@@ -119,7 +119,11 @@
           <span id="ui-gold">0</span>
         </div>
       </div>
-      <div class="header-controls" style="display: flex; gap: 8px;">
+      <div class="header-controls" style="display: flex; gap: 8px; align-items: center;">
+        <div id="ui-user-badge" style="font-size: 11px; color: #d4ac0d; font-family: 'Cinzel', serif; background: rgba(184, 134, 11, 0.1); border: 1px solid rgba(184, 134, 11, 0.25); padding: 4px 8px; border-radius: 4px; display: none;">
+          👤 <span id="ui-username">Guest</span>
+        </div>
+        <button id="btn-logout" class="btn-control" style="font-size: 11px; background-color: hsla(0, 70%, 45%, 0.1); color: #f87171; border-color: rgba(239, 68, 68, 0.2); display: none;">Logout</button>
         <button id="btn-reset-game" class="btn-control" style="background-color: hsla(0, 70%, 45%, 0.15); color: hsl(0, 100%, 75%); border-color: hsla(0, 70%, 45%, 0.3); font-size: 11px;">Reset Character</button>
         <button id="btn-header-settings" class="btn-control" style="font-size: 11px;">⚙️ Settings</button>
         <button id="btn-toggle-mode" class="btn-control">Taskbar Mode</button>
@@ -455,6 +459,53 @@
       </main>
     </div>
 
+    <!-- Auth Overlay (Login/Signup Screen) -->
+    <div id="auth-overlay" class="overlay show" style="z-index: 1200; background: #07080c; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; overflow: hidden; display: flex; justify-content: center; align-items: center;">
+      <!-- Canvas for background animated particles -->
+      <canvas id="auth-menu-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1;"></canvas>
+      
+      <div class="main-menu-card menu-fade-in-1" style="z-index: 2; max-width: 380px;">
+        <h1 class="main-menu-title">GWYN</h1>
+        <div style="color: #d4ac0d; font-size: 13px; margin: 4px 0 10px 0; letter-spacing: 2px;">✥ ⚔ ✥</div>
+        <div style="font-family: 'Cinzel', serif; font-size: 12px; color: #d4ac0d; text-transform: uppercase; letter-spacing: 4px; margin-bottom: 25px; font-weight: 700; text-shadow: 0 1px 3px rgba(0,0,0,0.5);">Account Access</div>
+        
+        <!-- Toggle Buttons -->
+        <div style="display: flex; gap: 10px; margin-bottom: 20px; width: 100%;">
+          <button id="btn-show-login" class="btn-primary" style="flex: 1; padding: 10px 0; font-size: 12px; font-family: 'Cinzel', serif; cursor: pointer;">Login</button>
+          <button id="btn-show-signup" class="btn-control" style="flex: 1; padding: 10px 0; font-size: 12px; font-family: 'Cinzel', serif; cursor: pointer;">Signup</button>
+        </div>
+
+        <!-- Login Form -->
+        <form id="form-login" style="display: flex; flex-direction: column; gap: 15px; width: 100%;">
+          <div style="text-align: left; display: flex; flex-direction: column; gap: 5px;">
+            <label style="font-family: 'Cinzel', serif; font-size: 11px; color: #d4ac0d;">Username</label>
+            <input type="text" id="login-username" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #7d6608; background: rgba(24, 18, 12, 0.6); color: #fff; outline: none; font-size: 13px; box-sizing: border-box;">
+          </div>
+          <div style="text-align: left; display: flex; flex-direction: column; gap: 5px;">
+            <label style="font-family: 'Cinzel', serif; font-size: 11px; color: #d4ac0d;">Password</label>
+            <input type="password" id="login-password" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #7d6608; background: rgba(24, 18, 12, 0.6); color: #fff; outline: none; font-size: 13px; box-sizing: border-box;">
+          </div>
+          <div id="login-error" style="color: #ef4444; font-size: 11px; text-align: center; display: none;"></div>
+          <button type="submit" class="btn-primary" style="padding: 12px 0; font-size: 14px; text-transform: uppercase; font-weight: 800; cursor: pointer;">Enter Game</button>
+        </form>
+
+        <!-- Signup Form -->
+        <form id="form-signup" style="display: flex; flex-direction: column; gap: 15px; width: 100%; display: none;">
+          <div style="text-align: left; display: flex; flex-direction: column; gap: 5px;">
+            <label style="font-family: 'Cinzel', serif; font-size: 11px; color: #d4ac0d;">Create Username</label>
+            <input type="text" id="signup-username" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #7d6608; background: rgba(24, 18, 12, 0.6); color: #fff; outline: none; font-size: 13px; box-sizing: border-box;">
+          </div>
+          <div style="text-align: left; display: flex; flex-direction: column; gap: 5px;">
+            <label style="font-family: 'Cinzel', serif; font-size: 11px; color: #d4ac0d;">Create Password</label>
+            <input type="password" id="signup-password" required style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #7d6608; background: rgba(24, 18, 12, 0.6); color: #fff; outline: none; font-size: 13px; box-sizing: border-box;">
+          </div>
+          <div id="signup-error" style="color: #ef4444; font-size: 11px; text-align: center; display: none;"></div>
+          <div id="signup-success" style="color: #22c55e; font-size: 11px; text-align: center; display: none;"></div>
+          <button type="submit" class="btn-primary" style="padding: 12px 0; font-size: 14px; text-transform: uppercase; font-weight: 800; cursor: pointer;">Register</button>
+        </form>
+      </div>
+    </div>
+
     <!-- Start Overlay (Modal) -->
     <div id="start-overlay" class="overlay show">
       <div class="overlay-content-wrapper">
@@ -612,6 +663,7 @@
   </div>
 
   <!-- Game Scripts -->
+  <script src="src/auth.js?v=3.0"></script>
   <script src="src/entities.js?v=3.0"></script>
   <script src="src/game.js?v=3.0"></script>
   <script src="src/main.js?v=3.0"></script>

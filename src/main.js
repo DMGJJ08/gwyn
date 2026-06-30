@@ -65,65 +65,73 @@ document.addEventListener('DOMContentLoaded', () => {
   // Load Saved Game Progress
   function loadSavedData() {
     try {
-      const saved = localStorage.getItem('gwyn_save_data');
-      if (saved) {
-        const data = JSON.parse(saved);
-        if (data) {
-          selectedClass = data.className || 'Warrior';
-          game.unlockedStage = 3;
-          
-          // Disable start-overlay immediately as game already started
-          startOverlay.classList.remove('show');
-          document.getElementById('main-menu-overlay').classList.add('show'); // Make sure menu displays on boot
-          
-          // Initialize game engine directly
-          game.initGame(selectedClass);
-          
-          // Apply loaded properties
-          game.player.level = data.level || 1;
-          game.player.xp = data.xp || 0;
-          game.player.gold = data.gold || 0;
-          game.player.upgrades = data.upgrades || { weapon: 1, armor: 1, ring: 1 };
-          if (data.inventory) {
-            game.player.inventory = data.inventory;
-          }
-          
-          // Load allocated stats
-          if (data.allocatedStats) {
-            game.player.allocatedStats = data.allocatedStats;
-          }
-          
-          // Load VIP configuration
-          if (data.vipConfig) {
-            window.autoHealActive = data.vipConfig.autoHealActive || false;
-            window.assignedHpItem = data.vipConfig.assignedHpItem || null;
-            window.assignedMpItem = data.vipConfig.assignedMpItem || null;
-            window.hpHealThreshold = data.vipConfig.hpHealThreshold !== undefined ? data.vipConfig.hpHealThreshold : 35;
-            window.mpHealThreshold = data.vipConfig.mpHealThreshold !== undefined ? data.vipConfig.mpHealThreshold : 35;
-            
-            // Sync DOM checkbox and sliders
-            document.getElementById('chk-auto-heal-active').checked = window.autoHealActive;
-            document.getElementById('slider-hp-heal').value = window.hpHealThreshold;
-            document.getElementById('lbl-hp-heal').textContent = `${window.hpHealThreshold}%`;
-            document.getElementById('slider-mp-heal').value = window.mpHealThreshold;
-            document.getElementById('lbl-mp-heal').textContent = `${window.mpHealThreshold}%`;
-            
-            // Visually restore slots
-            updateAssignedSlotVisuals();
-          }
-          
-          game.player.initClassStats();
-          game.player.hp = game.player.maxHp;
-          game.player.mp = game.player.maxMp;
-          game.isPlaying = false; // Stay paused on main menu initially!
-          
-          // Update tabs and locked cards UI
-          lockClassSelectionUI();
-          updateUI();
+      // First try to load from the active logged-in user profile
+      let data = authLoadGameData();
+      
+      // Fallback to local storage if no user profile data exists yet
+      if (!data) {
+        const saved = localStorage.getItem('gwyn_save_data');
+        if (saved) {
+          data = JSON.parse(saved);
         }
+      }
+      
+      if (data) {
+        selectedClass = data.className || 'Warrior';
+        game.unlockedStage = 3;
+        
+        // Disable start-overlay immediately as game already started
+        startOverlay.classList.remove('show');
+        document.getElementById('main-menu-overlay').classList.add('show'); // Make sure menu displays on boot
+        
+        // Initialize game engine directly
+        game.initGame(selectedClass);
+        
+        // Apply loaded properties
+        game.player.level = data.level || 1;
+        game.player.xp = data.xp || 0;
+        game.player.gold = data.gold || 0;
+        game.player.upgrades = data.upgrades || { weapon: 1, armor: 1, ring: 1 };
+        if (data.inventory) {
+          game.player.inventory = data.inventory;
+        }
+        
+        // Load allocated stats
+        if (data.allocatedStats) {
+          game.player.allocatedStats = data.allocatedStats;
+        }
+        
+        // Load VIP configuration
+        if (data.vipConfig) {
+          window.autoHealActive = data.vipConfig.autoHealActive || false;
+          window.assignedHpItem = data.vipConfig.assignedHpItem || null;
+          window.assignedMpItem = data.vipConfig.assignedMpItem || null;
+          window.hpHealThreshold = data.vipConfig.hpHealThreshold !== undefined ? data.vipConfig.hpHealThreshold : 35;
+          window.mpHealThreshold = data.vipConfig.mpHealThreshold !== undefined ? data.vipConfig.mpHealThreshold : 35;
+          
+          // Sync DOM checkbox and sliders
+          document.getElementById('chk-auto-heal-active').checked = window.autoHealActive;
+          document.getElementById('slider-hp-heal').value = window.hpHealThreshold;
+          document.getElementById('lbl-hp-heal').textContent = `${window.hpHealThreshold}%`;
+          document.getElementById('slider-mp-heal').value = window.mpHealThreshold;
+          document.getElementById('lbl-mp-heal').textContent = `${window.mpHealThreshold}%`;
+          
+          // Visually restore slots
+          updateAssignedSlotVisuals();
+        }
+        
+        game.player.initClassStats();
+        game.player.hp = game.player.maxHp;
+        game.player.mp = game.player.maxMp;
+        game.isPlaying = false; // Stay paused on main menu initially!
+        
+        // Update tabs and locked cards UI
+        lockClassSelectionUI();
+        updateUI();
       } else {
         // First startup: trigger overlay UI bindings
         updateOverlayAttributesUI();
+        startOverlay.classList.add('show');
       }
     } catch (e) {
       console.error("Could not load save data", e);
@@ -151,7 +159,8 @@ document.addEventListener('DOMContentLoaded', () => {
           mpHealThreshold: window.mpHealThreshold
         }
       };
-      localStorage.setItem('gwyn_save_data', JSON.stringify(data));
+      // Save directly to user account profile!
+      authSaveGameData(data);
     } catch (e) {
       console.error("Could not save data", e);
     }
@@ -920,8 +929,196 @@ document.addEventListener('DOMContentLoaded', () => {
     // Start initial animation
     animationId = requestAnimationFrame(animate);
   }
+
+  // --- AUTH SYSTEM BINDINGS & ACTIONS ---
+  const authOverlay = document.getElementById('auth-overlay');
+  const formLogin = document.getElementById('form-login');
+  const formSignup = document.getElementById('form-signup');
+  const btnShowLogin = document.getElementById('btn-show-login');
+  const btnShowSignup = document.getElementById('btn-show-signup');
+  const loginError = document.getElementById('login-error');
+  const signupError = document.getElementById('signup-error');
+  const signupSuccess = document.getElementById('signup-success');
   
-  // Initial startup load
-  loadSavedData();
+  const userBadge = document.getElementById('ui-user-badge');
+  const usernameText = document.getElementById('ui-username');
+  const btnLogout = document.getElementById('btn-logout');
+
+  // Toggle Forms
+  btnShowLogin.addEventListener('click', () => {
+    btnShowLogin.className = 'btn-primary';
+    btnShowSignup.className = 'btn-control';
+    formLogin.style.display = 'flex';
+    formSignup.style.display = 'none';
+  });
+
+  btnShowSignup.addEventListener('click', () => {
+    btnShowLogin.className = 'btn-control';
+    btnShowSignup.className = 'btn-primary';
+    formLogin.style.display = 'none';
+    formSignup.style.display = 'flex';
+  });
+
+  // Login Submit
+  formLogin.addEventListener('submit', (e) => {
+    e.preventDefault();
+    loginError.style.display = 'none';
+    
+    const userVal = document.getElementById('login-username').value;
+    const passVal = document.getElementById('login-password').value;
+    
+    const res = authLogin(userVal, passVal);
+    if (res.success) {
+      authOverlay.style.display = 'none';
+      userBadge.style.display = 'block';
+      usernameText.textContent = window.currentUser;
+      btnLogout.style.display = 'block';
+      
+      // Load user profile game progress
+      loadSavedData();
+    } else {
+      loginError.textContent = res.message;
+      loginError.style.display = 'block';
+    }
+  });
+
+  // Signup Submit
+  formSignup.addEventListener('submit', (e) => {
+    e.preventDefault();
+    signupError.style.display = 'none';
+    signupSuccess.style.display = 'none';
+    
+    const userVal = document.getElementById('signup-username').value;
+    const passVal = document.getElementById('signup-password').value;
+    
+    const res = authRegister(userVal, passVal);
+    if (res.success) {
+      signupSuccess.textContent = res.message + " You can now login.";
+      signupSuccess.style.display = 'block';
+      // Reset inputs
+      document.getElementById('signup-username').value = '';
+      document.getElementById('signup-password').value = '';
+      // Switch back to login form after 1.5s
+      setTimeout(() => {
+        btnShowLogin.click();
+      }, 1500);
+    } else {
+      signupError.textContent = res.message;
+      signupError.style.display = 'block';
+    }
+  });
+
+  // Logout Click
+  btnLogout.addEventListener('click', () => {
+    authLogout();
+  });
+
+  // --- AUTH ANIMATED BACKGROUND ---
+  function initAuthParticles() {
+    const canvas = document.getElementById('auth-menu-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    
+    let animationId = null;
+    let particles = [];
+    
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    
+    window.addEventListener('resize', resize);
+    resize();
+    
+    class Spark {
+      constructor() {
+        this.reset(true);
+      }
+      
+      reset(init = false) {
+        this.x = Math.random() * canvas.width;
+        this.y = init ? Math.random() * canvas.height : canvas.height + 10;
+        this.size = Math.random() * 2 + 1;
+        this.speedY = -(Math.random() * 30 + 15);
+        this.speedX = Math.random() * 10 - 5;
+        this.opacity = Math.random() * 0.5 + 0.2;
+        this.color = 'hsla(' + (Math.random() * 25 + 15) + ', 100%, 55%, ';
+        this.shadowColor = 'hsl(' + (Math.random() * 25 + 15) + ', 100%, 50%)';
+      }
+      
+      update(dt) {
+        this.y += this.speedY * dt;
+        this.x += this.speedX * dt;
+        this.opacity -= 0.05 * dt;
+        if (this.opacity <= 0 || this.y < -20 || this.x < -20 || this.x > canvas.width + 20) {
+          this.reset();
+        }
+      }
+      
+      draw() {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = this.color + this.opacity + ')';
+        ctx.shadowBlur = this.size * 4;
+        ctx.shadowColor = this.shadowColor;
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+    
+    const particleCount = Math.min(80, Math.floor(window.innerWidth / 15));
+    for (let i = 0; i < particleCount; i++) {
+      particles.push(new Spark());
+    }
+    
+    let lastTime = performance.now();
+    
+    function animate(now) {
+      if (authOverlay.style.display === 'none') {
+        animationId = null;
+        return;
+      }
+      
+      const dt = Math.min(0.1, (now - lastTime) / 1000);
+      lastTime = now;
+      
+      ctx.fillStyle = '#07080c';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      particles.forEach(p => {
+        p.update(dt);
+        p.draw();
+      });
+      
+      animationId = requestAnimationFrame(animate);
+    }
+    
+    const observer = new MutationObserver(() => {
+      const isShow = authOverlay.style.display !== 'none';
+      if (isShow && !animationId) {
+        lastTime = performance.now();
+        animationId = requestAnimationFrame(animate);
+      }
+    });
+    observer.observe(authOverlay, { attributes: true, attributeFilter: ['style'] });
+    
+    animationId = requestAnimationFrame(animate);
+  }
+
+  // --- INITIAL STARTUP HANDLER ---
+  if (authCheckSession()) {
+    authOverlay.style.display = 'none';
+    userBadge.style.display = 'block';
+    usernameText.textContent = window.currentUser;
+    btnLogout.style.display = 'block';
+    loadSavedData();
+  } else {
+    authOverlay.style.display = 'flex';
+    userBadge.style.display = 'none';
+    btnLogout.style.display = 'none';
+  }
+
+  initAuthParticles();
   initMainMenuParticles();
 });
