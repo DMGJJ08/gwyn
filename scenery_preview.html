@@ -223,7 +223,7 @@
       2: new Image(),
       3: new Image()
     };
-    bgImages[1].src = 'assets/farm_background.png';
+    bgImages[1].src = 'assets/farm_background_mid.png';
     bgImages[2].src = 'assets/underwater_background.png';
     bgImages[3].src = 'assets/desert_background.png';
     const bgLoaded = { 1: false, 2: false, 3: false };
@@ -285,9 +285,41 @@
 
       // Layer 1: Sky & Sunset Clouds
       if (chkLayer1.checked) {
+        const skyGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        skyGrad.addColorStop(0, '#1a0933'); // Dark purple
+        skyGrad.addColorStop(0.5, '#4a123c'); // Burgundy
+        skyGrad.addColorStop(0.8, '#852b1b'); // Burnt orange
+        skyGrad.addColorStop(1, '#c25a1f'); // Warm sunset yellow
+        ctx.fillStyle = skyGrad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Draw sun setting
+        ctx.fillStyle = '#ff7f36';
+        ctx.shadowBlur = 40;
+        ctx.shadowColor = '#ff5100';
+        ctx.beginPath();
+        ctx.arc(canvas.width / 2, groundY - 10, 45, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0; // Reset shadow
+
+        // Render cloud layers (15% speed relative movement)
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+        clouds.forEach(c => {
+          c.x = (c.x - c.speed * dt - (scrollSpeed * 0.15 * dt)) % (canvas.width + 100);
+          if (c.x < -100) c.x = canvas.width + 100;
+          ctx.beginPath();
+          ctx.arc(c.x, c.y, c.size, 0, Math.PI * 2);
+          ctx.arc(c.x + c.size * 0.6, c.y - c.size * 0.2, c.size * 0.8, 0, Math.PI * 2);
+          ctx.arc(c.x - c.size * 0.6, c.y - c.size * 0.1, c.size * 0.7, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      }
+
+      // Layer 2: Original Farm Midground Image (45% Speed)
+      if (chkLayer2.checked) {
         if (bgLoaded[1]) {
           const img = bgImages[1];
-          const imgScrollX = (scrollX * 0.15) % canvas.width;
+          const imgScrollX = (scrollX * 0.45) % canvas.width;
           const startTileIndex = Math.floor(imgScrollX / canvas.width);
           
           const x1 = startTileIndex * canvas.width - imgScrollX;
@@ -298,58 +330,23 @@
           const isFlipped2 = ((startTileIndex + 1) % 2 !== 0);
           drawBgTile(img, x2, 0, canvas.width, canvas.height, isFlipped2);
         } else {
-          const skyGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
-          skyGrad.addColorStop(0, '#1a0933'); // Dark purple
-          skyGrad.addColorStop(0.5, '#4a123c'); // Burgundy
-          skyGrad.addColorStop(0.8, '#852b1b'); // Burnt orange
-          skyGrad.addColorStop(1, '#c25a1f'); // Warm sunset yellow
-          ctx.fillStyle = skyGrad;
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-          // Draw sun setting
-          ctx.fillStyle = '#ff7f36';
-          ctx.shadowBlur = 40;
-          ctx.shadowColor = '#ff5100';
+          // Fallback dynamic hills if image is not loaded
+          ctx.fillStyle = '#1c2417';
           ctx.beginPath();
-          ctx.arc(canvas.width / 2, groundY - 10, 45, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.shadowBlur = 0; // Reset shadow
-
-          // Render cloud layers (10% speed relative movement)
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.06)';
-          clouds.forEach(c => {
-            c.x = (c.x - c.speed * dt - (scrollSpeed * 0.05 * dt)) % (canvas.width + 100);
-            if (c.x < -100) c.x = canvas.width + 100;
-            ctx.beginPath();
-            ctx.arc(c.x, c.y, c.size, 0, Math.PI * 2);
-            ctx.arc(c.x + c.size * 0.6, c.y - c.size * 0.2, c.size * 0.8, 0, Math.PI * 2);
-            ctx.arc(c.x - c.size * 0.6, c.y - c.size * 0.1, c.size * 0.7, 0, Math.PI * 2);
-            ctx.fill();
-          });
-        }
-      }
-
-      // Layer 2: Parallax Rolling Hills (45% Speed)
-      if (chkLayer2.checked) {
-        ctx.fillStyle = '#1c2417'; // Deep dark forest green silhouette
-        ctx.beginPath();
-        ctx.moveTo(0, canvas.height);
-
-        const midOffset = (scrollX * 0.45) % canvas.width;
-        
-        // Render 2 tiles seamlessly
-        for (let t = 0; t <= 2; t++) {
-          const tileStart = t * canvas.width - midOffset;
-          for (let x = 0; x <= canvas.width; x += 10) {
-            const worldX = tileStart + x;
-            // Procedural hill calculation using sine waves
-            const y = Math.sin(worldX * 0.004) * 25 + Math.cos(worldX * 0.008) * 10 + groundY - 45;
-            ctx.lineTo(worldX, y);
+          ctx.moveTo(0, canvas.height);
+          const midOffset = (scrollX * 0.45) % canvas.width;
+          for (let t = 0; t <= 2; t++) {
+            const tileStart = t * canvas.width - midOffset;
+            for (let x = 0; x <= canvas.width; x += 15) {
+              const worldX = tileStart + x;
+              const y = Math.sin(worldX * 0.004) * 22 + Math.cos(worldX * 0.008) * 8 + groundY - 45;
+              ctx.lineTo(worldX, y);
+            }
           }
+          ctx.lineTo(canvas.width * 2, canvas.height);
+          ctx.closePath();
+          ctx.fill();
         }
-        ctx.lineTo(canvas.width * 2, canvas.height);
-        ctx.closePath();
-        ctx.fill();
       }
 
       // Layer 3: Foreground Ground & Fences (100% Speed)
