@@ -318,6 +318,8 @@ document.addEventListener('DOMContentLoaded', () => {
     requestAnimationFrame((t) => game.gameLoop(t));
   });
 
+  const btnVipRevive = document.getElementById('btn-vip-revive');
+
   // Respawn Binding - Punishes death by sending the player back to Level 1 of the previous cleared stage
   btnRespawn.addEventListener('click', () => {
     gameoverOverlay.classList.remove('show');
@@ -335,6 +337,25 @@ document.addEventListener('DOMContentLoaded', () => {
     requestAnimationFrame((t) => game.gameLoop(t));
     
     updateUI();
+  });
+
+  // VIP Revive Binding - Spends 1 VIP Coin to revive immediately on the spot
+  btnVipRevive.addEventListener('click', () => {
+    if (game.player && game.player.inventory && game.player.inventory.etc && game.player.inventory.etc.vip2coin > 0) {
+      game.player.inventory.etc.vip2coin--;
+      
+      gameoverOverlay.classList.remove('show');
+      game.player.resetHp();
+      game.player.mp = game.player.maxMp;
+      
+      // Resume loops immediately
+      game.isPlaying = true;
+      game.lastTime = performance.now();
+      requestAnimationFrame((t) => game.gameLoop(t));
+      
+      saveGameData();
+      updateUI();
+    }
   });
 
   // Taskbar Mode Toggle Binding
@@ -816,6 +837,15 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     const targetName = stageNames[respawnStage] || `Stage ${respawnStage}`;
     btnRespawn.textContent = `Respawn at ${targetName}`;
+    
+    // Toggle VIP Revive button display if player owns a VIP Coin
+    const hasVipCoin = game.player && game.player.inventory && game.player.inventory.etc && game.player.inventory.etc.vip2coin > 0;
+    if (hasVipCoin) {
+      btnVipRevive.style.display = 'block';
+    } else {
+      btnVipRevive.style.display = 'none';
+    }
+    
     gameoverOverlay.classList.add('show');
   };
   window.showVictory = () => {
