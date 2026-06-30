@@ -261,7 +261,7 @@
     let scrollSpeed = 150;
     let bgOffset = 0;
     let lastTime = performance.now();
-    const groundY = Math.round(canvas.height * 0.71); // 71% height = 270px
+    const groundY = Math.round(canvas.height * 0.68); // 68% height = 258px
 
     // Drifting cloud variables for Farm stage
     const clouds = [
@@ -323,7 +323,7 @@
         if (farmMidLoaded) {
           const imgScrollX = (scrollX * 0.5) % canvas.width;
           const startTileIndex = Math.floor(imgScrollX / canvas.width);
-          const yPos = groundY - canvas.width * 0.55;
+          const yPos = groundY - canvas.width * 0.525;
           const drawH = canvas.width;
           
           const x1 = startTileIndex * canvas.width - imgScrollX;
@@ -359,12 +359,8 @@
           const imgScrollX = (scrollX * 1.0) % canvas.width;
           const startTileIndex = Math.floor(imgScrollX / canvas.width);
           
-          // Compress path/foreground vertically to 80px
-          const drawH = 80;
-          
-          // Draw bottom solid dirt base to fill up canvas height
-          ctx.fillStyle = '#3a210f';
-          ctx.fillRect(0, groundY + drawH - 5, canvas.width, canvas.height - (groundY + drawH - 5));
+          // Draw foreground layer fully to show path and textured soil base details from image
+          const drawH = canvas.height - groundY;
           
           const x1 = startTileIndex * canvas.width - imgScrollX;
           const isFlipped1 = (startTileIndex % 2 !== 0);
